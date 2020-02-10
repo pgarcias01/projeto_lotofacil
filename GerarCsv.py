@@ -1,45 +1,15 @@
 import os
-import shutil
 from bs4 import BeautifulSoup
 import csv
 import requests
 import zipfile
-from datetime import datetime as dt, timedelta
 
 
 
-def update_result():
-    days_of_draw = [1,3,5]
-    f = open('lastupdate.txt', 'r')
-    load = f.read()
-    f.close()
-    load = dt.strptime(load, '%Y-%m-%d')
-    date_read = load.date()
-    day_read = load.isoweekday()
-    now_date = dt.now().date()
-    now_time = dt.now().time()
-    now = dt.now()
-    day_now = now.isoweekday()
+def update_result(link):
 
-    while True:
-        if (now_date.isoweekday() in days_of_draw) and (now_time.hour >= 20) and (now_date != date_read):
-            gerar_db(now_date)
-            break
-        else:
-            for x in range(1,5):
-                aux = (now_date - timedelta(days=x))
-                aux_day_week = aux.isoweekday()
-                if ((aux_day_week in days_of_draw) and (aux != date_read)):
-                    gerar_db(aux)
-                    break
-            break
-
-
-def gerar_db(date= dt.today()):
-
-    url = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_lotfac.zip'
-    target_path = 'D_lotfac.zip'
-
+    url = link
+    target_path = '/home/pgarcias01/mysite/D_lotfac.zip'
     response = requests.get(url, stream=True)
     handle = open(target_path, "wb")
     for chunk in response.iter_content(chunk_size=512):
@@ -47,42 +17,23 @@ def gerar_db(date= dt.today()):
             handle.write(chunk)
     handle.close()
     with zipfile.ZipFile(target_path) as zf:
-        zf.extractall()
+        zf.extractall('/home/pgarcias01/mysite/')
 
     # Creating paths
     base_path = os.getcwd()
-    csv_path = base_path.replace('lotto','lotto_files/csv')
-    html_path = base_path.replace('lotto','lotto_files/html')
+    csv_path = base_path.replace('lotto','/home/pgarcias01/mysite/lotto_files/csv')
+    html_path = base_path.replace('lotto','/home/pgarcias01/mysite/lotto_files/html')
 
 
 
-    html_file = html_path + '/' + 'D_LOTFAC.HTM'
-    csv_file = open('{csv_path}/lotofacil.csv'.format(csv_path=csv_path),'w')
-
-
-    def dwn_unzip_func():
-        # checking for zip file and deleting if exists
-        if os.path.isfile(lotto_zip) == True:
-            print("Deleting previous vertion of " + lotto_zip + "\n")
-            os.remove(lotto_zip)
-
-        # checking for data directory and deleting if exists
-        if os.path.isdir("data") == True:
-            shutil.rmtree("data")
-
-        # downloading file using wget
-        # should figure out how via python
-        os.system("wget {url}".format(url = url))
-
-        # unziping data to data directory
-        # should figure out using python
-        os.system("unzip {zip} -d data".format(zip = lotto_zip))
+    html_file = '/home/pgarcias01/mysite/d_lotfac.htm'
+    csv_file = open('/home/pgarcias01/mysite/lotofacil.csv'.format(csv_path=csv_path),'w')
 
 
     def html_parse_func():
         # Parse the html file
-        html = open(html_file,'r')
-        soup = BeautifulSoup(html, 'html.parser')
+        with open(html_file, 'rb') as html:
+            soup = BeautifulSoup(html, 'html.parser', from_encoding='latin-1')
 
         html_list = []
         for i in soup.find_all('td'):
@@ -110,7 +61,7 @@ def gerar_db(date= dt.today()):
         master_list = []
         for d in date_list:
             sd = int(d) -1
-            ed = sd + 31
+            ed = sd + 34
             tmp_list = []
             for d in range(sd,ed):
                 if (d <= 10) or (d>= 25):
@@ -149,12 +100,15 @@ def gerar_db(date= dt.today()):
             n13 = i[14].strip('\n')
             n14 = i[15].strip('\n')
             n15 = i[16].strip('\n')
-            if ((i[19] in list_estados) or (i[18] == '0')):
-                count = 24
-            elif i[21] in list_estados:
-                count = 26
-            else:
-                count = 25
+            count = 19
+            while True:
+                if i[18] == '0':
+                    count += 4
+                    break
+                if i[count] in list_estados:
+                    count = count+5
+                    break
+                count += 1
             p15 = i[count].strip('\n')
             p14 = i[(count + 1)].strip('\n')
             p13 = i[(count + 2)].strip('\n')
@@ -169,5 +123,3 @@ def gerar_db(date= dt.today()):
 
     # calling parse function
     html_parse_func()
-    f = open('lastupdate.txt', 'w')
-    f.write(date.strftime('%Y-%m-%d'))

@@ -1,9 +1,8 @@
 import csv
-import numpy as np
 
 
 def buscar_resultado(concurso=100):
-    f = open('lotofacil.csv')
+    f = open('/home/pgarcias01/mysite/lotofacil.csv')
     csv_f = csv.reader(f)
     resultados = []
     for row in csv_f:
@@ -26,3 +25,13 @@ def buscar_resultado(concurso=100):
 
 def real_float(real):
     return float(real.replace(".", "").replace(",", "."))
+
+def max_concurso():
+    f = open('/home/pgarcias01/mysite/lotofacil.csv')
+    csv_f = csv.reader(f)
+    resultados = []
+    for row in csv_f:
+        if row != []:
+            resultados.append(row)
+    max_conc = len(resultados) -1
+    return str(max_conc)
