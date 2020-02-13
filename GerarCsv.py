@@ -64,10 +64,12 @@ def update_result(link):
             ed = sd + 34
             tmp_list = []
             for d in range(sd,ed):
-                if (d <= 10) or (d>= 25):
+                try:
                     v = html_dict[d]
                     tmp_list.append(v.strip())
-            master_list.append(tmp_list)
+                except:
+                    break
+        master_list.append(tmp_list)
 
         def date_func(i):
             nw = i.split('/')[2] + '-' + i.split('/')[1] + '-' + i.split('/')[0]
